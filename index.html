@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>事業整流 PDCA</title>
+  <style>
+    :root{
+      --bg:#181818;
+      --panel:#1f1f1f;
+      --field:#2a2a2a;
+      --border:#5b5b5b;
+      --text:#f2f2f2;
+      --muted:#b4b4b4;
+      --accent:#8f7cff;
+      --danger:#ff7b7b;
+      --ok:#8fe39d;
+      --warn:#ffd36a;
+      --radius:10px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    }
+    .wrap{
+      max-width:1100px;
+      margin:0 auto;
+      padding:18px 16px 36px;
+    }
+    h1{
+      font-size:34px;
+      margin:0 0 4px;
+      font-weight:700;
+    }
+    .sub{
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:18px;
+    }
+    .divider{
+      border-top:1px solid #8a8a8a;
+      opacity:.7;
+      margin:14px 0 18px;
+    }
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .tab-btn, button{
+      appearance:none;
+      border:1px solid #7a7a7a;
+      background:transparent;
+      color:var(--text);
+      border-radius:10px;
+      padding:10px 16px;
+      font-size:14px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .tab-btn.active{
+      background:#252525;
+    }
+    .view{display:none}
+    .view.active{display:block}
+    .section{
+      margin-top:18px;
+    }
+    .section-title{
+      color:var(--accent);
+      font-size:12px;
+      font-weight:700;
+      margin:0 0 10px;
+    }
+    .section-line{
+      border-top:1px solid #8a8a8a;
+      opacity:.7;
+      margin-top:2px;
+      margin-bottom:12px;
+    }
+    .grid-2,.grid-3{
+      display:grid;
+      gap:12px;
+    }
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field label{
+      display:block;
+      font-size:12px;
+      margin-bottom:6px;
+    }
+    input, textarea, select{
+      width:100%;
+      border:1px solid #555;
+      background:var(--field);
+      color:var(--text);
+      border-radius:8px;
+      padding:12px 12px;
+      font-size:15px;
+      outline:none;
+    }
+    input::placeholder, textarea::placeholder{color:#9a9a9a}
+    textarea{
+      min-height:74px;
+      resize:vertical;
+    }
+    .pill-group{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:4px;
+    }
+    .pill{
+      border:1px solid #7a7a7a;
+      background:transparent;
+      color:var(--text);
+      padding:9px 14px;
+      border-radius:10px;
+      font-size:14px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .pill.active{
+      background:#2b2b2b;
+      border-color:#b0b0b0;
+    }
+    .save-wrap{
+      margin-top:14px;
+    }
+    .save-btn{
+      width:100%;
+      background:transparent;
+      padding:14px 16px;
+      font-weight:700;
+    }
+    .save-message{
+      display:none;
+      margin-top:10px;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid #2d6638;
+      color:var(--ok);
+      background:#1f2a21;
+      font-size:14px;
+      font-weight:700;
+      text-align:center;
+    }
+    .save-message.show{
+      display:block;
+    }
+    .summary-cards{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+      margin:8px 0 18px;
+    }
+    .card{
+      background:#202020;
+      border:1px solid #444;
+      border-radius:10px;
+      padding:14px;
+    }
+    .card .k{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .card .v{
+      font-size:26px;
+      font-weight:700;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+      background:#202020;
+      border-radius:10px;
+      overflow:hidden;
+    }
+    th,td{
+      text-align:left;
+      border-bottom:1px solid #3a3a3a;
+      padding:10px 8px;
+      vertical-align:top;
+    }
+    th{
+      color:var(--muted);
+      background:#242424;
+      position:sticky;
+      top:0;
+    }
+    .small{font-size:12px;color:var(--muted)}
+    .status{
+      display:inline-flex;
+      border:1px solid #555;
+      border-radius:999px;
+      padding:5px 10px;
+      font-size:12px;
+      font-weight:700;
+    }
+    .status.ok{color:var(--ok); border-color:#2d6638;}
+    .status.warn{color:var(--warn); border-color:#6a5b2a;}
+    .status.bad{color:var(--danger); border-color:#773333;}
+    .action-btn{
+      padding:7px 10px;
+      font-size:12px;
+      margin-right:6px;
+    }
+    .tools{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .period-controls{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+      align-items:end;
+      margin-top:12px;
+    }
+    .period-controls button{
+      margin-top:0;
+    }
+    .timeline{
+      display:grid;
+      gap:12px;
+      margin-top:12px;
+    }
+    .timeline-card{
+      background:#202020;
+      border:1px solid #444;
+      border-radius:10px;
+      padding:14px;
+    }
+    .timeline-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .timeline-date{
+      font-size:18px;
+      font-weight:700;
+    }
+    .timeline-change{
+      color:#ffd36a;
+      font-size:13px;
+      line-height:1.6;
+      max-width:720px;
+    }
+    .timeline-metrics{
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:8px;
+    }
+    .metric-box{
+      border:1px solid #3a3a3a;
+      border-radius:8px;
+      padding:10px;
+      background:#242424;
+    }
+    .metric-box .mk{
+      color:#aaa;
+      font-size:11px;
+      margin-bottom:4px;
+    }
+    .metric-box .mv{
+      font-size:18px;
+      font-weight:700;
+      font-variant-numeric:tabular-nums;
+    }
+    .timeline-empty{
+      color:#aaa;
+      font-size:13px;
+      padding:12px;
+      border:1px solid #444;
+      border-radius:10px;
+      background:#202020;
+    }
+    .chart-grid{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:12px;
+      margin-top:12px;
+    }
+    .chart-card{
+      background:#202020;
+      border:1px solid #444;
+      border-radius:10px;
+      padding:14px;
+    }
+    .chart-title{
+      font-size:13px;
+      color:#aaa;
+      margin-bottom:6px;
+    }
+    .chart-value{
+      font-size:24px;
+      font-weight:700;
+      margin-bottom:10px;
+      font-variant-numeric:tabular-nums;
+    }
+    .chart-wrap{
+      width:100%;
+      overflow:hidden;
+      border:1px solid #3a3a3a;
+      border-radius:8px;
+      background:#242424;
+      padding:8px;
+    }
+    .chart-note{
+      font-size:11px;
+      color:#9a9a9a;
+      margin-top:8px;
+      line-height:1.5;
+    }
+    .chart-tooltip{
+      position:fixed;
+      z-index:9999;
+      pointer-events:none;
+      display:none;
+      max-width:340px;
+      padding:10px 12px;
+      border:1px solid #666;
+      border-radius:10px;
+      background:#111;
+      color:#fff;
+      font-size:12px;
+      line-height:1.6;
+      white-space:pre-wrap;
+      box-shadow:0 8px 20px rgba(0,0,0,.45);
+    }
+    .memo-box{
+      background:#202020;
+      border:1px solid #444;
+      border-radius:10px;
+      padding:14px;
+      margin-bottom:12px;
+    }
+    .ai-share-box{
+      background:#1d1d1d;
+      border:1px solid #666;
+      border-radius:12px;
+      padding:16px;
+      margin:14px 0 18px;
+    }
+    .ai-share-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+    .ai-share-title{font-size:18px;font-weight:800;}
+    .ai-share-period{font-size:13px;color:#bdbdbd;line-height:1.5;}
+    .ai-share-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:8px;
+    }
+    .ai-share-card{
+      border:1px solid #3d3d3d;
+      background:#242424;
+      border-radius:9px;
+      padding:10px;
+      min-height:64px;
+    }
+    .ai-share-card .label{font-size:11px;color:#aaa;margin-bottom:5px;line-height:1.35;}
+    .ai-share-card .num{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;}
+    .ai-share-card .diff{
+      margin-top:5px;
+      font-size:12px;
+      font-weight:700;
+      line-height:1.35;
+    }
+    .diff.up{color:#8fe39d;}
+    .diff.down{color:#ff7b7b;}
+    .diff.flat{color:#b4b4b4;}
+    .compare-controls{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+      align-items:end;
+      margin-top:12px;
+      padding-top:12px;
+      border-top:1px solid #3a3a3a;
+    }
+    .compare-note{
+      font-size:12px;
+      color:#aaa;
+      margin-top:8px;
+      line-height:1.5;
+    }
+    .ai-share-notes{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    .ai-share-note{
+      border:1px solid #3d3d3d;
+      background:#222;
+      border-radius:9px;
+      padding:10px;
+      font-size:12px;
+      line-height:1.6;
+      color:#ddd;
+    }
+    .ai-share-note strong{color:#ffd36a;}
+    .screenshot-mode .tabs,
+    .screenshot-mode #recordView,
+    .screenshot-mode #historyView,
+    .screenshot-mode #handoverView,
+    .screenshot-mode .sub,
+    .screenshot-mode .divider,
+    .screenshot-mode #summaryView > .section:not(.ai-keep),
+    .screenshot-mode #summaryView > .memo-box{
+      display:none !important;
+    }
+    .screenshot-mode .wrap{max-width:1280px;padding:14px;}
+    .screenshot-mode h1{font-size:24px;margin-bottom:10px;}
+    .screenshot-mode #summaryView{display:block !important;}
+    .screenshot-exit-btn{
+      display:none;
+      position:fixed;
+      top:12px;
+      right:12px;
+      z-index:10000;
+      background:#111;
+      border:1px solid #888;
+      color:#fff;
+      border-radius:999px;
+      padding:10px 14px;
+      font-size:13px;
+      font-weight:800;
+      box-shadow:0 8px 20px rgba(0,0,0,.45);
+    }
+    .screenshot-mode .screenshot-exit-btn{
+      display:block;
+    }
+
+    @media (max-width:800px){
+      h1{font-size:28px}
+      .grid-2,.grid-3,.summary-cards,.period-controls,.compare-controls,.timeline-metrics,.chart-grid,.ai-share-grid,.ai-share-notes{grid-template-columns:1fr}
+      table{display:block; overflow:auto; white-space:nowrap}
+    }
+
+    /* ===== 認証(マジックリンク) ===== */
+    .auth-overlay{
+      position:fixed; inset:0; z-index:10001;
+      background:#141414; display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    body.authed .auth-overlay{ display:none; }
+    body:not(.authed) .wrap{ display:none; }
+    .auth-card{
+      width:100%; max-width:400px; background:#1f1f1f; border:1px solid #444;
+      border-radius:14px; padding:26px 22px;
+    }
+    .auth-title{ font-size:24px; font-weight:800; margin-bottom:10px; }
+    .auth-sub{ color:var(--muted); font-size:13px; line-height:1.6; margin-bottom:16px; }
+    .auth-card input{ margin-bottom:12px; }
+    .auth-btn{ width:100%; background:#252525; font-weight:700; padding:13px; }
+    .auth-msg{ margin-top:12px; font-size:13px; color:var(--warn); line-height:1.6; min-height:18px; }
+    .auth-bar{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      flex-wrap:wrap; margin-bottom:14px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-title">事業整流 PDCA</div>
+      <div class="auth-sub">ログイン用のメールアドレスを入力してください。届いたリンクを踏むと開けます（パスワード不要）。</div>
+      <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email" />
+      <button type="button" id="authSendBtn" class="auth-btn">ログインリンクを送る</button>
+      <div class="auth-msg" id="authMsg"></div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <h1>事業整流 PDCA</h1>
+    <div class="sub"><span id="recordCount">0</span>件の記録</div>
+    <div class="auth-bar" id="authBar" style="display:none;">
+      <span id="authWho" class="small"></span>
+      <span>
+        <button type="button" class="action-btn" id="refreshBtn">再読み込み</button>
+        <button type="button" class="action-btn" id="logoutBtn">ログアウト</button>
+      </span>
+    </div>
+    <div class="divider"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-view="recordView">記録する</button>
+      <button class="tab-btn" data-view="historyView">履歴</button>
+      <button class="tab-btn" data-view="summaryView">集計</button>
+      <button class="tab-btn" data-view="handoverView">引き継ぎ</button>
+    </div>
+
+    <div id="recordView" class="view active">
+      <form id="pdcaForm">
+        <div class="section">
+          <div class="section-title">基本情報</div>
+          <div class="section-line"></div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="date">日付</label>
+              <input type="date" id="date" required />
+            </div>
+            <div class="field">
+              <label for="time">時間</label>
+              <input type="time" id="time" />
+            </div>
+            <div class="field">
+              <label for="target">ターゲット（年齢/性別）</label>
+              <input id="target" placeholder="例：35-44 男女" />
+            </div>
+          </div>
+          <div class="field" style="margin-top:12px;">
+            <label for="change">広告変更点（広告・ターゲット・クリエイティブなど）</label>
+            <input id="change" placeholder="例：ターゲットを35-44に変更 / クリエイティブ差し替え" />
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">広告</div>
+          <div class="section-line"></div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="cpc">リンクCPC（円）</label>
+              <input type="number" step="0.01" id="cpc" placeholder="206" />
+            </div>
+            <div class="field">
+              <label for="ctr">リンクCTR（%）</label>
+              <input type="number" step="0.01" id="ctr" placeholder="2.93" />
+            </div>
+            <div class="field">
+              <label for="clicks">リンククリック数</label>
+              <input type="number" step="1" id="clicks" placeholder="16" />
+            </div>
+            <div class="field">
+              <label for="lineCpa">CPA・LINE追加完了（円）</label>
+              <input type="number" step="1" id="lineCpa" placeholder="9500" />
+            </div>
+            <div class="field">
+              <label for="cpm">CPM（円）</label>
+              <input type="number" step="1" id="cpm" placeholder="194" />
+            </div>
+            <div class="field">
+              <label for="spend">広告費（円）</label>
+              <input type="number" step="1" id="spend" placeholder="3000" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">LINE導線</div>
+          <div class="section-line"></div>
+          <div class="grid-3">
+            <div class="field">
+              <label for="lineTap">LINE追加タップ数</label>
+              <input type="number" step="1" id="lineTap" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="addRate">追加タップ率（%）</label>
+              <input type="number" step="0.01" id="addRate" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="lineAdds">追加完了数</label>
+              <input type="number" step="1" id="lineAdds" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="newLineAdds">新規追加完了数</label>
+              <input type="number" step="1" id="newLineAdds" placeholder="0" />
+            </div>
+
+            <div class="field">
+              <label for="fullReadCount">能動読了数</label>
+              <input type="number" step="1" id="fullReadCount" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="textCv">文字CV数</label>
+              <input type="number" step="1" id="textCv" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="observationComplete">文字観測完了数</label>
+              <input type="number" step="1" id="observationComplete" placeholder="0" />
+            </div>
+
+            <div class="field">
+              <label for="detailConfirm">単発詳細確認数</label>
+              <input type="number" step="1" id="detailConfirm" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="scheduleSend">日程送付数</label>
+              <input type="number" step="1" id="scheduleSend" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="singleClose">単発成約</label>
+              <input type="number" step="1" id="singleClose" placeholder="0" />
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">ブロック地点</div>
+          <div class="section-line"></div>
+          <div class="pill-group" id="blockPointGroup">
+            <button type="button" class="pill" data-value="通１の直後">通１の直後</button>
+            <button type="button" class="pill" data-value="通２の直後">通２の直後</button>
+            <button type="button" class="pill" data-value="通３の直後">通３の直後</button>
+            <button type="button" class="pill" data-value="通４の直後">通４の直後</button>
+            <button type="button" class="pill" data-value="通５の直後">通５の直後</button>
+            <button type="button" class="pill" data-value="通６の直後">通６の直後</button>
+            <button type="button" class="pill" data-value="通７の直後">通７の直後</button>
+            <button type="button" class="pill" data-value="リマインド１直後">リマインド１直後</button>
+            <button type="button" class="pill" data-value="リマインド２直後">リマインド２直後</button>
+            <button type="button" class="pill" data-value="リマインド３直後">リマインド３直後</button>
+            <button type="button" class="pill" data-value="文字CV後">文字CV後</button>
+            <button type="button" class="pill" data-value="文字観測完了直後">文字観測完了直後</button>
+            <button type="button" class="pill" data-value="単発詳細確認直後">単発詳細確認直後</button>
+            <button type="button" class="pill" data-value="FAQなどの情報確認後">FAQなどの情報確認後</button>
+            <button type="button" class="pill" data-value="日程候補送付後">日程候補送付後</button>
+            <button type="button" class="pill" data-value="支払い前">支払い前</button>
+          </div>
+          <input type="hidden" id="blockPoint" />
+          <div class="field" style="margin-top:12px;">
+            <label for="blockDetail">ブロックした地点・補足</label>
+            <input id="blockDetail" placeholder="例：単発詳細確認後、支払い方法の確認前にブロック" />
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">仮説・調整・次に見るポイント</div>
+          <div class="section-line"></div>
+          <div class="field">
+            <label for="hypothesis">仮説（何が起きていたか）</label>
+            <textarea id="hypothesis" placeholder="例：支払い確定の段差が急だった。"></textarea>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label for="adjustment">調整した内容</label>
+            <textarea id="adjustment" placeholder="例：日程確認を支払いより先に挟む導線に変更。"></textarea>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label for="nextWatch">次に見るポイント</label>
+            <textarea id="nextWatch" placeholder="例：日程送付まで進むか。どこで止まるか。"></textarea>
+          </div>
+        </div>
+
+        <div class="save-wrap">
+          <button type="submit" class="save-btn">保存する</button>
+          <div id="saveMessage" class="save-message"></div>
+        </div>
+      </form>
+    </div>
+
+    <div id="historyView" class="view">
+      <div class="tools">
+        <button id="exportJsonBtn">JSON保存</button>
+        <button id="importJsonBtn">JSON読込</button>
+        <button id="exportCsvBtn">CSV出力</button>
+        <button id="clearAllBtn">全削除</button>
+        <input type="file" id="jsonFile" accept="application/json" style="display:none;" />
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>日付</th>
+            <th>時間</th>
+            <th>ターゲット</th>
+            <th>広告変更点</th>
+            <th>新規追加完了</th>
+            <th>文字CV</th>
+            <th>観測完了</th>
+            <th>詳細確認</th>
+            <th>日程送付</th>
+            <th>単発成約</th>
+            <th>ブロック地点</th>
+            <th>ブロック補足</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+    </div>
+
+    <div id="summaryView" class="view">
+      <div class="memo-box">
+        <div class="section-title">集計期間</div>
+        <div id="summaryPeriod" style="font-size:18px;font-weight:700;">記録なし</div>
+        <div class="small" id="summaryPeriodSub" style="margin-top:4px;">集計対象の記録がまだありません。</div>
+
+        <div class="period-controls">
+          <div class="field">
+            <label for="summaryStartDate">表示期間・開始日</label>
+            <input type="date" id="summaryStartDate">
+          </div>
+          <div class="field">
+            <label for="summaryEndDate">表示期間・終了日</label>
+            <input type="date" id="summaryEndDate">
+          </div>
+          <button type="button" onclick="applySummaryPeriod()">この期間で集計</button>
+          <button type="button" onclick="clearSummaryPeriod()">全期間に戻す</button>
+          <button type="button" onclick="toggleScreenshotMode()">スクショ用表示</button>
+        </div>
+
+        <div class="compare-controls">
+          <div class="field">
+            <label for="compareStartDate">比較対象・開始日</label>
+            <input type="date" id="compareStartDate">
+          </div>
+          <div class="field">
+            <label for="compareEndDate">比較対象・終了日</label>
+            <input type="date" id="compareEndDate">
+          </div>
+          <button type="button" onclick="applyComparePeriod()">比較する</button>
+          <button type="button" onclick="clearComparePeriod()">比較を外す</button>
+        </div>
+        <div class="compare-note" id="comparePeriodNote">比較対象期間を入れると、AI壁打ち用サマリーに差分を表示します。</div>
+      </div>
+
+      <div class="section ai-keep">
+        <div id="aiShareSummary" class="ai-share-box"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">広告集計</div>
+        <div class="section-line"></div>
+        <div class="summary-cards">
+          <div class="card"><div class="k">広告費 合計</div><div class="v" id="sumSpend">0</div></div>
+          <div class="card"><div class="k">リンククリック数 合計</div><div class="v" id="sumClicks">0</div></div>
+          <div class="card"><div class="k">平均リンクCPC</div><div class="v" id="avgCpc">0</div></div>
+          <div class="card"><div class="k">平均リンクCTR</div><div class="v" id="avgCtr">0</div></div>
+          <div class="card"><div class="k">平均CPM</div><div class="v" id="avgCpm">0</div></div>
+          <div class="card"><div class="k">平均新規追加CPA</div><div class="v" id="avgLineCpa">0</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">LINE導線 集計</div>
+        <div class="section-line"></div>
+        <div class="summary-cards">
+          <div class="card"><div class="k">LINE追加タップ数 合計</div><div class="v" id="sumLineTap">0</div></div>
+          <div class="card"><div class="k">追加タップ率 平均</div><div class="v" id="avgAddRate">0</div></div>
+          <div class="card"><div class="k">追加完了数 合計</div><div class="v" id="sumLineAdds">0</div></div>
+          <div class="card"><div class="k">新規追加完了数 合計</div><div class="v" id="sumNewLineAdds">0</div></div>
+          <div class="card"><div class="k">能動読了数 合計</div><div class="v" id="sumFullReadCount">0</div></div>
+          <div class="card"><div class="k">文字CV数 合計</div><div class="v" id="sumTextCv">0</div></div>
+          <div class="card"><div class="k">文字観測完了数 合計</div><div class="v" id="sumObservationComplete">0</div></div>
+          <div class="card"><div class="k">単発詳細確認数 合計</div><div class="v" id="sumDetailConfirm">0</div></div>
+          <div class="card"><div class="k">日程送付数 合計</div><div class="v" id="sumScheduleSend">0</div></div>
+          <div class="card"><div class="k">単発成約 合計</div><div class="v" id="sumSingleClose">0</div></div>
+        </div>
+        <div class="small" id="newLineAddsNote" style="margin-top:8px;color:#aaa;"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">主要率</div>
+        <div class="section-line"></div>
+        <div class="summary-cards">
+          <div class="card"><div class="k">クリック → 新規追加完了</div><div class="v" id="rateClickToAdd">0%</div></div>
+          <div class="card"><div class="k">LINE追加タップ → 新規追加完了</div><div class="v" id="rateTapToNewAdd">0%</div></div>
+          <div class="card"><div class="k">新規追加完了 → 能動読了</div><div class="v" id="rateNewAddToFullRead">0%</div></div>
+          <div class="card"><div class="k">新規追加完了 → 文字CV</div><div class="v" id="rateAddToTextCv">0%</div></div>
+          <div class="card"><div class="k">文字CV → 文字観測完了</div><div class="v" id="rateTextCvToComplete">0%</div></div>
+          <div class="card"><div class="k">文字観測完了 → 詳細確認</div><div class="v" id="rateCompleteToDetail">0%</div></div>
+          <div class="card"><div class="k">詳細確認 → 日程送付</div><div class="v" id="rateDetailToSchedule">0%</div></div>
+          <div class="card"><div class="k">日程送付 → 単発成約</div><div class="v" id="rateScheduleToClose">0%</div></div>
+          <div class="card"><div class="k">新規追加完了 → 単発成約</div><div class="v" id="rateAddToClose">0%</div></div>
+          <div class="card"><div class="k">新規追加に対するブロック率</div><div class="v" id="rateBlockToNewAdd">0%</div></div>
+          <div class="card"><div class="k">文字CV獲得CPA</div><div class="v" id="costPerTextCv">0</div></div>
+          <div class="card"><div class="k">広告費 ÷ 単発成約</div><div class="v" id="costPerClose">0</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">数字推移グラフ</div>
+        <div class="section-line"></div>
+        <div class="small">指定期間内の日付ごとの推移を、折れ線グラフで表示します。グラフ上の点にマウスを乗せると、数値・広告変更点・調整点を確認できます。</div>
+        <div id="summaryCharts" class="chart-grid"></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">ブロック地点 集計</div>
+        <div class="section-line"></div>
+        <div class="summary-cards">
+          <div class="card"><div class="k">通１の直後</div><div class="v" id="blockAfterTsu1">0</div></div>
+          <div class="card"><div class="k">通２の直後</div><div class="v" id="blockAfterTsu2">0</div></div>
+          <div class="card"><div class="k">通３の直後</div><div class="v" id="blockAfterTsu3">0</div></div>
+          <div class="card"><div class="k">通４の直後</div><div class="v" id="blockAfterTsu4">0</div></div>
+          <div class="card"><div class="k">通５の直後</div><div class="v" id="blockAfterTsu5">0</div></div>
+          <div class="card"><div class="k">通６の直後</div><div class="v" id="blockAfterTsu6">0</div></div>
+          <div class="card"><div class="k">通７の直後</div><div class="v" id="blockAfterTsu7">0</div></div>
+          <div class="card"><div class="k">リマインド１直後</div><div class="v" id="blockAfterRemind1">0</div></div>
+          <div class="card"><div class="k">リマインド２直後</div><div class="v" id="blockAfterRemind2">0</div></div>
+          <div class="card"><div class="k">リマインド３直後</div><div class="v" id="blockAfterRemind3">0</div></div>
+          <div class="card"><div class="k">文字CV後</div><div class="v" id="blockAfterTextCv">0</div></div>
+          <div class="card"><div class="k">文字観測完了直後</div><div class="v" id="blockAfterComplete">0</div></div>
+          <div class="card"><div class="k">単発詳細確認直後</div><div class="v" id="blockAfterDetail">0</div></div>
+          <div class="card"><div class="k">FAQなどの情報確認後</div><div class="v" id="blockAfterFaq">0</div></div>
+          <div class="card"><div class="k">日程候補送付後</div><div class="v" id="blockAfterSchedule">0</div></div>
+          <div class="card"><div class="k">支払い前</div><div class="v" id="blockBeforePay">0</div></div>
+          <div class="card"><div class="k">未選択</div><div class="v" id="blockNone">0</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="handoverView" class="view">
+      <div class="memo-box">
+        <div class="section-title">引き継ぎメモ</div>
+        <div class="small">直近の記録から「変更点」「仮説」「調整した内容」「次に見るポイント」を一覧で確認できます。</div>
+      </div>
+      <div id="handoverList"></div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Supabase設定（この2つを自分のプロジェクトの値に書き換える）=====
+    const SUPABASE_URL = "https://kkidmpdidrevwdfviddg.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_593gDbHIsO9CIpf1sJ6uzg_2srb6-A9";
+    // ====================================================================
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    let records = [];
+    let appInitialized = false;
+    let editingId = null;
+    let summaryStartDate = "";
+    let summaryEndDate = "";
+    let compareStartDate = "";
+    let compareEndDate = "";
+
+    const fields = [
+      "date","time","target","change",
+      "cpc","ctr","clicks","lineCpa","cpm","spend",
+      "lineTap","addRate","lineAdds","newLineAdds","fullReadCount","textCv","observationComplete","detailConfirm","scheduleSend","singleClose",
+      "blockPoint","blockDetail","hypothesis","adjustment","nextWatch"
+    ];
+
+    const $ = (id) => document.getElementById(id);
+
+    function today() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function currentTime() {
+      return new Date().toTimeString().slice(0, 5);
+    }
+
+    function num(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function hasValue(v) {
+      return v !== undefined && v !== null && String(v).trim() !== "";
+    }
+
+    function effectiveNewLineAdds(record) {
+      // 新規追加完了数は、入力された値をそのまま使う。
+      // 0は「新規追加0」として扱う。
+      // 旧バージョンや手動編集でキー名が揺れている可能性も拾う。
+      const candidates = [
+        record.newLineAdds,
+        record.newLineAdd,
+        record.newLineAddCount,
+        record.newAddCount,
+        record.newAdds,
+        record.newLineComplete
+      ];
+
+      for (const value of candidates) {
+        if (hasValue(value)) return num(value);
+      }
+
+      return 0;
+    }
+
+    function estimatedImpressions(record) {
+      const clicks = num(record.clicks);
+      const ctr = num(record.ctr);
+      if (clicks > 0 && ctr > 0) return clicks / (ctr / 100);
+      return 0;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // ===== Supabaseストレージ =====
+    async function loadRecords() {
+      const { data, error } = await sb.from("pdca_records").select("*");
+      if (error) { console.error(error); alert("データ読み込みに失敗しました: " + error.message); return; }
+      records = data || [];
+    }
+
+    async function upsertRecord(rec) {
+      const { error } = await sb.from("pdca_records").upsert(rec, { onConflict: "id" });
+      if (error) { alert("保存に失敗しました: " + error.message); throw error; }
+    }
+
+    async function deleteRecordDb(id) {
+      const { error } = await sb.from("pdca_records").delete().eq("id", id);
+      if (error) { alert("削除に失敗しました: " + error.message); throw error; }
+    }
+
+    async function clearAllDb() {
+      const { error } = await sb.from("pdca_records").delete().not("id", "is", null);
+      if (error) { alert("削除に失敗しました: " + error.message); throw error; }
+    }
+
+    async function refreshData() {
+      await loadRecords();
+      renderAll();
+    }
+
+    function clearForm() {
+      $("pdcaForm").reset();
+      $("date").value = today();
+      $("time").value = currentTime();
+      editingId = null;
+      document.querySelector("#recordView button[type='submit']").textContent = "保存する";
+      setBlockPoint("");
+    }
+
+    function getFormData() {
+      const data = {};
+      fields.forEach(f => data[f] = $(f).value);
+
+      const clicks = num(data.clicks);
+      const lineTap = num(data.lineTap);
+      const lineAdds = num(data.lineAdds);
+      const spend = num(data.spend);
+
+      if (!data.addRate && clicks > 0 && lineTap >= 0) {
+        data.addRate = ((lineTap / clicks) * 100).toFixed(2);
+      }
+      if (!data.lineCpa && spend > 0 && lineAdds > 0) {
+        data.lineCpa = Math.round(spend / lineAdds);
+      }
+
+      return data;
+    }
+
+    function normalizeBlockPoint(value) {
+      const map = {
+        "通1後": "通１の直後",
+        "通１後": "通１の直後",
+        "通2後": "通２の直後",
+        "通２後": "通２の直後",
+        "通3後": "通３の直後",
+        "通３後": "通３の直後",
+        "通4後": "通４の直後",
+        "通４後": "通４の直後",
+        "通5後": "通５の直後",
+        "通５後": "通５の直後",
+        "通6後": "通６の直後",
+        "通６後": "通６の直後",
+        "通7後": "通７の直後",
+        "通７後": "通７の直後",
+        "文字観測完了後": "文字観測完了直後",
+        "単発詳細確認後": "単発詳細確認直後",
+        "日程送付後": "日程候補送付後",
+        "なし": ""
+      };
+      return map[value] ?? value ?? "";
+    }
+
+    function setFormData(record) {
+      fields.forEach(f => $(f).value = record[f] ?? "");
+      setBlockPoint(normalizeBlockPoint(record.blockPoint || ""));
+    }
+
+    function setBlockPoint(value) {
+      $("blockPoint").value = value;
+      document.querySelectorAll("#blockPointGroup .pill").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.value === value);
+      });
+    }
+
+    function statusClass(blockPoint) {
+      if (!blockPoint) return "ok";
+      if (blockPoint === "支払い前" || blockPoint === "日程候補送付後" || blockPoint === "日程送付後") return "bad";
+      return "warn";
+    }
+
+    function renderHistory() {
+      const tbody = $("historyBody");
+      tbody.innerHTML = "";
+
+      const sorted = [...records].sort((a,b) => ((b.date || "") + " " + (b.time || "")).localeCompare((a.date || "") + " " + (a.time || "")));
+
+      sorted.forEach(r => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(r.date)}</td>
+          <td>${escapeHtml(r.time || "")}</td>
+          <td>${escapeHtml(r.target)}</td>
+          <td>${escapeHtml(r.change)}</td>
+          <td>${fmt(effectiveNewLineAdds(r))}</td>
+          <td>${escapeHtml(r.textCv)}</td>
+          <td>${escapeHtml(r.observationComplete)}</td>
+          <td>${escapeHtml(r.detailConfirm)}</td>
+          <td>${escapeHtml(r.scheduleSend)}</td>
+          <td>${escapeHtml(r.singleClose)}</td>
+          <td><span class="status ${statusClass(r.blockPoint)}">${escapeHtml(r.blockPoint || "未設定")}</span></td>
+          <td>${escapeHtml(r.blockDetail || "")}</td>
+          <td>
+            <button class="action-btn" onclick="editRecord('${r.id}')">編集</button>
+            <button class="action-btn" onclick="deleteRecord('${r.id}')">削除</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        if (r.hypothesis || r.adjustment || r.nextWatch) {
+          const tr2 = document.createElement("tr");
+          tr2.innerHTML = `
+            <td></td>
+            <td colspan="12" class="small">
+              ${r.hypothesis ? `<div><strong>仮説：</strong>${escapeHtml(r.hypothesis)}</div>` : ""}
+              ${r.adjustment ? `<div><strong>調整：</strong>${escapeHtml(r.adjustment)}</div>` : ""}
+              ${r.nextWatch ? `<div><strong>次に見るポイント：</strong>${escapeHtml(r.nextWatch)}</div>` : ""}
+            </td>
+          `;
+          tbody.appendChild(tr2);
+        }
+      });
+    }
+
+    function fmt(n) {
+      return Math.round(num(n)).toLocaleString();
+    }
+
+    function fmt1(n) {
+      const value = num(n);
+      return Number.isFinite(value) ? value.toFixed(1) : "0.0";
+    }
+
+    function pct(numerator, denominator) {
+      const den = num(denominator);
+      if (!den) return "0%";
+      return ((num(numerator) / den) * 100).toFixed(1) + "%";
+    }
+
+    function avg(records, field) {
+      const values = records.map(r => num(r[field])).filter(v => v > 0);
+      if (!values.length) return 0;
+      return values.reduce((a,b) => a + b, 0) / values.length;
+    }
+
+    function filterRecordsByDateRange(startDate, endDate) {
+      return records.filter(r => {
+        if (!r.date) return false;
+        if (startDate && r.date < startDate) return false;
+        if (endDate && r.date > endDate) return false;
+        return true;
+      });
+    }
+
+    function getCompareRecords() {
+      if (!compareStartDate && !compareEndDate) return [];
+      return filterRecordsByDateRange(compareStartDate, compareEndDate);
+    }
+
+    window.applyComparePeriod = function() {
+      compareStartDate = $("compareStartDate").value || "";
+      compareEndDate = $("compareEndDate").value || "";
+      renderSummary();
+    }
+
+    window.clearComparePeriod = function() {
+      compareStartDate = "";
+      compareEndDate = "";
+      $("compareStartDate").value = "";
+      $("compareEndDate").value = "";
+      renderSummary();
+    }
+
+    function emptyTotals() {
+      return {
+        spend:0, clicks:0, lineTap:0, lineAdds:0, newLineAdds:0, fullReadCount:0, textCv:0,
+        observationComplete:0, detailConfirm:0, scheduleSend:0, singleClose:0,
+        totalImpressions:0, totalBlocks:0,
+        blocks:{
+          afterTsu1:0, afterTsu2:0, afterTsu3:0, afterTsu4:0, afterTsu5:0, afterTsu6:0, afterTsu7:0,
+          afterRemind1:0, afterRemind2:0, afterRemind3:0,
+          afterTextCv:0, afterComplete:0, afterDetail:0, afterFaq:0, afterSchedule:0, beforePay:0, none:0
+        }
+      };
+    }
+
+    function calcTotalsForCompare(list) {
+      const total = emptyTotals();
+      list.forEach(r => {
+        total.spend += num(r.spend);
+        total.clicks += num(r.clicks);
+        total.lineTap += num(r.lineTap);
+        total.lineAdds += num(r.lineAdds);
+        total.newLineAdds += effectiveNewLineAdds(r);
+        total.fullReadCount += num(r.fullReadCount);
+        total.textCv += num(r.textCv);
+        total.observationComplete += num(r.observationComplete);
+        total.detailConfirm += num(r.detailConfirm);
+        total.scheduleSend += num(r.scheduleSend);
+        total.singleClose += num(r.singleClose);
+        total.totalImpressions += estimatedImpressions(r);
+        if (normalizeBlockPoint(r.blockPoint || "")) total.totalBlocks += 1;
+      });
+      return total;
+    }
+
+    function compareValue(key, total) {
+      const values = {
+        spend: total.spend,
+        clicks: total.clicks,
+        avgCpc: total.clicks ? total.spend / total.clicks : 0,
+        avgCtr: total.totalImpressions ? (total.clicks / total.totalImpressions) * 100 : 0,
+        avgCpm: total.totalImpressions ? (total.spend / total.totalImpressions) * 1000 : 0,
+        newCpa: total.newLineAdds ? total.spend / total.newLineAdds : 0,
+        lineTap: total.lineTap,
+        tapRate: total.clicks ? (total.lineTap / total.clicks) * 100 : 0,
+        newLineAdds: total.newLineAdds,
+        clickToNewAdd: total.clicks ? (total.newLineAdds / total.clicks) * 100 : 0,
+        tapToNewAdd: total.lineTap ? (total.newLineAdds / total.lineTap) * 100 : 0,
+        readRate: total.newLineAdds ? (total.fullReadCount / total.newLineAdds) * 100 : 0,
+        textCv: total.textCv,
+        textCvCpa: total.textCv ? total.spend / total.textCv : 0,
+        newAddToTextCv: total.newLineAdds ? (total.textCv / total.newLineAdds) * 100 : 0,
+        textCvToComplete: total.textCv ? (total.observationComplete / total.textCv) * 100 : 0,
+        completeToDetail: total.observationComplete ? (total.detailConfirm / total.observationComplete) * 100 : 0,
+        detailToSchedule: total.detailConfirm ? (total.scheduleSend / total.detailConfirm) * 100 : 0,
+        scheduleToClose: total.scheduleSend ? (total.singleClose / total.scheduleSend) * 100 : 0,
+        singleClose: total.singleClose,
+        newAddToClose: total.newLineAdds ? (total.singleClose / total.newLineAdds) * 100 : 0,
+        blockRate: total.newLineAdds ? (total.totalBlocks / total.newLineAdds) * 100 : 0,
+        closeCpa: total.singleClose ? total.spend / total.singleClose : 0
+      };
+      return values[key] ?? 0;
+    }
+
+    function diffHtml(current, compare, type, lowerIsBetter=false) {
+      const diff = current - compare;
+      const abs = Math.abs(diff);
+      if (abs < 0.0001) return `<div class="diff flat">±0</div>`;
+
+      const good = lowerIsBetter ? diff < 0 : diff > 0;
+      const cls = good ? "up" : "down";
+      const sign = diff > 0 ? "+" : "−";
+      const display = type === "percent" ? fmt1(abs) + "pt" : (type === "decimal" ? fmt1(abs) : fmt(abs));
+      const ratio = compare ? ` / ${diff > 0 ? "+" : "−"}${Math.abs(diff / compare * 100).toFixed(1)}%` : "";
+      return `<div class="diff ${cls}">${sign}${display}${ratio}</div>`;
+    }
+
+    function getSummaryRecords() {
+      return filterRecordsByDateRange(summaryStartDate, summaryEndDate);
+    }
+
+    window.applySummaryPeriod = function() {
+      summaryStartDate = $("summaryStartDate").value || "";
+      summaryEndDate = $("summaryEndDate").value || "";
+      renderSummary();
+    }
+
+    window.clearSummaryPeriod = function() {
+      summaryStartDate = "";
+      summaryEndDate = "";
+      $("summaryStartDate").value = "";
+      $("summaryEndDate").value = "";
+      renderSummary();
+    }
+
+    function groupSummaryByDate(summaryRecords) {
+      const map = {};
+      summaryRecords.forEach(r => {
+        const date = r.date || "日付なし";
+        if (!map[date]) {
+          map[date] = {
+            date,
+            spend:0, clicks:0, lineTap:0, lineAdds:0, newLineAdds:0, fullReadCount:0, textCv:0,
+            observationComplete:0, detailConfirm:0, scheduleSend:0, singleClose:0,
+            changes:[],
+            adjustments:[]
+          };
+        }
+        map[date].spend += num(r.spend);
+        map[date].clicks += num(r.clicks);
+        map[date].lineTap += num(r.lineTap);
+        map[date].lineAdds += num(r.lineAdds);
+        map[date].newLineAdds += effectiveNewLineAdds(r);
+        map[date].fullReadCount += num(r.fullReadCount);
+        map[date].textCv += num(r.textCv);
+        map[date].observationComplete += num(r.observationComplete);
+        map[date].detailConfirm += num(r.detailConfirm);
+        map[date].scheduleSend += num(r.scheduleSend);
+        map[date].singleClose += num(r.singleClose);
+
+        const timePrefix = r.time ? `${r.time} ` : "";
+        if (r.change && String(r.change).trim()) {
+          map[date].changes.push(timePrefix + String(r.change).trim());
+        }
+        if (r.adjustment && String(r.adjustment).trim()) {
+          map[date].adjustments.push(timePrefix + String(r.adjustment).trim());
+        }
+      });
+
+      return Object.values(map).sort((a,b) => a.date.localeCompare(b.date));
+    }
+
+    function uniqueList(items) {
+      return [...new Set(items.filter(Boolean))];
+    }
+
+    window.showChartTooltip = function(event, text) {
+      const tip = $("chartTooltip");
+      if (!tip) return;
+      tip.textContent = text || "";
+      tip.style.display = text ? "block" : "none";
+      const offset = 14;
+      const maxX = window.innerWidth - tip.offsetWidth - 12;
+      const maxY = window.innerHeight - tip.offsetHeight - 12;
+      tip.style.left = Math.min(event.clientX + offset, maxX) + "px";
+      tip.style.top = Math.min(event.clientY + offset, maxY) + "px";
+    }
+
+    window.hideChartTooltip = function() {
+      const tip = $("chartTooltip");
+      if (tip) tip.style.display = "none";
+    }
+
+    function buildLineChartSvg(values, labels, isPercent=false, notes=[]) {
+      const width = 320;
+      const height = 160;
+      const padL = 28;
+      const padR = 10;
+      const padT = 10;
+      const padB = 28;
+      const innerW = width - padL - padR;
+      const innerH = height - padT - padB;
+
+      if (!values.length) {
+        return `<svg viewBox="0 0 ${width} ${height}" width="100%" height="160" role="img" aria-label="chart empty">
+          <rect x="0" y="0" width="${width}" height="${height}" fill="transparent"/>
+          <text x="${width/2}" y="${height/2}" text-anchor="middle" fill="#888" font-size="12">データなし</text>
+        </svg>`;
+      }
+
+      const maxVal = Math.max(...values, 0);
+      const minVal = Math.min(...values, 0);
+      const range = maxVal === minVal ? (maxVal === 0 ? 1 : Math.abs(maxVal) || 1) : (maxVal - minVal);
+
+      const pts = values.map((v, i) => {
+        const x = padL + (values.length === 1 ? innerW / 2 : (i * innerW / (values.length - 1)));
+        const y = padT + innerH - ((v - minVal) / range) * innerH;
+        return {x, y, v, label: labels[i], note: notes[i] || ""};
+      });
+
+      const polyline = pts.map(p => `${p.x},${p.y}`).join(" ");
+      const gridY = [0, 0.5, 1].map(r => padT + innerH * r);
+      const yLabels = [maxVal, (maxVal + minVal) / 2, minVal];
+
+      const xLabelStart = labels[0] || "";
+      const xLabelEnd = labels[labels.length - 1] || "";
+
+      return `<svg viewBox="0 0 ${width} ${height}" width="100%" height="160" role="img" aria-label="line chart">
+        ${gridY.map(y => `<line x1="${padL}" y1="${y}" x2="${width-padR}" y2="${y}" stroke="#3a3a3a" stroke-width="1"/>`).join("")}
+        <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+innerH}" stroke="#5a5a5a" stroke-width="1"/>
+        <line x1="${padL}" y1="${padT+innerH}" x2="${width-padR}" y2="${padT+innerH}" stroke="#5a5a5a" stroke-width="1"/>
+        <polyline fill="none" stroke="#8f7cff" stroke-width="3" points="${polyline}" stroke-linecap="round" stroke-linejoin="round"/>
+        ${pts.map(p => {
+          const valueText = isPercent ? p.v.toFixed(1) + "%" : Math.round(p.v).toLocaleString();
+          const title = `${p.label}：${valueText}${p.note ? "\n" + p.note : ""}`;
+          const tip = escapeHtml(title);
+          const pointColor = p.note ? "#ff5a5a" : "#8f7cff";
+          return `<circle cx="${p.x}" cy="${p.y}" r="7" fill="${pointColor}" data-tip="${tip}" onmousemove="showChartTooltip(event, this.dataset.tip)" onmouseleave="hideChartTooltip()"><title>${tip}</title></circle>`;
+        }).join("")}
+        ${yLabels.map((val, i) => `<text x="${padL-6}" y="${gridY[i]+4}" text-anchor="end" fill="#9a9a9a" font-size="10">${isPercent ? val.toFixed(1)+'%' : Math.round(val)}</text>`).join("")}
+        <text x="${padL}" y="${height-8}" text-anchor="start" fill="#9a9a9a" font-size="10">${xLabelStart}</text>
+        <text x="${width-padR}" y="${height-8}" text-anchor="end" fill="#9a9a9a" font-size="10">${xLabelEnd}</text>
+      </svg>`;
+    }
+
+    function renderTrendCharts(summaryRecords) {
+      const box = $("summaryCharts");
+      if (!box) return;
+
+      const rows = groupSummaryByDate(summaryRecords);
+      if (!rows.length) {
+        box.innerHTML = `<div class="timeline-empty">指定期間内のグラフ表示対象がありません。</div>`;
+        return;
+      }
+
+      const labels = rows.map(r => String(r.date).slice(5));
+      const notes = rows.map(r => {
+        const parts = [];
+        const changes = uniqueList(r.changes || []);
+        const adjustments = uniqueList(r.adjustments || []);
+        if (changes.length) parts.push("広告変更点：" + changes.join(" / "));
+        if (adjustments.length) parts.push("調整点：" + adjustments.join(" / "));
+        return parts.join("\n");
+      });
+      const metrics = [
+        { key: "spend", title: "広告費", percent: false },
+        { key: "clicks", title: "クリック数", percent: false },
+        { key: "lineTap", title: "LINE追加タップ数", percent: false },
+        { key: "lineAdds", title: "追加完了数", percent: false },
+        { key: "newLineAdds", title: "新規追加完了数", percent: false, calc: r => effectiveNewLineAdds(r) },
+        { key: "fullReadCount", title: "能動読了数", percent: false },
+        { key: "textCv", title: "文字CV数", percent: false },
+        { key: "observationComplete", title: "文字観測完了数", percent: false },
+        { key: "detailConfirm", title: "単発詳細確認数", percent: false },
+        { key: "scheduleSend", title: "日程送付数", percent: false },
+        { key: "singleClose", title: "単発成約", percent: false },
+        { key: "lineAddRate", title: "新規追加完了率", percent: true, calc: r => r.clicks ? (effectiveNewLineAdds(r) / r.clicks) * 100 : 0 },
+        { key: "textCvRate", title: "文字CV率", percent: true, calc: r => effectiveNewLineAdds(r) ? (r.textCv / effectiveNewLineAdds(r)) * 100 : 0 },
+        { key: "closeRate", title: "成約率", percent: true, calc: r => effectiveNewLineAdds(r) ? (r.singleClose / effectiveNewLineAdds(r)) * 100 : 0 }
+      ];
+
+      box.innerHTML = metrics.map(metric => {
+        const values = rows.map(r => metric.calc ? metric.calc(r) : r[metric.key] || 0);
+        const svg = buildLineChartSvg(values, labels, metric.percent, notes);
+
+        const totalClicks = rows.reduce((sum, r) => sum + num(r.clicks), 0);
+        const totalNewAdds = rows.reduce((sum, r) => sum + effectiveNewLineAdds(r), 0);
+        const totalTextCv = rows.reduce((sum, r) => sum + num(r.textCv), 0);
+        const totalSingleClose = rows.reduce((sum, r) => sum + num(r.singleClose), 0);
+
+        let displayValue;
+        let noteLabel = metric.percent ? "期間全体率" : "期間合計";
+
+        if (metric.key === "lineAddRate") {
+          displayValue = pct(totalNewAdds, totalClicks);
+        } else if (metric.key === "textCvRate") {
+          displayValue = pct(totalTextCv, totalNewAdds);
+        } else if (metric.key === "closeRate") {
+          displayValue = pct(totalSingleClose, totalNewAdds);
+        } else {
+          const totalValue = values.reduce((sum, v) => sum + num(v), 0);
+          displayValue = fmt(totalValue);
+        }
+
+        return `
+          <div class="chart-card">
+            <div class="chart-title">${metric.title}</div>
+            <div class="chart-value">${displayValue}</div>
+            <div class="chart-wrap">${svg}</div>
+            <div class="chart-note">${noteLabel} / 横軸：日付 / 縦軸：${metric.percent ? "率" : "数値"}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    window.toggleScreenshotMode = function() {
+      const isNowScreenshot = document.body.classList.toggle("screenshot-mode");
+      const btns = [...document.querySelectorAll("button")];
+      const mainBtn = btns.find(b => b.textContent.includes("スクショ用表示"));
+      if (mainBtn) mainBtn.textContent = "スクショ用表示";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderAiShareSummary(summaryRecords, total, totalImpressions, compareTotal=null, compareRecords=[]) {
+      const box = $("aiShareSummary");
+      if (!box) return;
+
+      const dated = summaryRecords.map(r => r.date).filter(Boolean).sort();
+      const periodText = dated.length ? (dated[0] === dated[dated.length - 1] ? dated[0] : `${dated[0]} 〜 ${dated[dated.length - 1]}`) : "記録なし";
+      const compareDated = compareRecords.map(r => r.date).filter(Boolean).sort();
+      const compareText = compareDated.length ? (compareDated[0] === compareDated[compareDated.length - 1] ? compareDated[0] : `${compareDated[0]} 〜 ${compareDated[compareDated.length - 1]}`) : "";
+      const totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length;
+      total.totalBlocks = totalBlocks;
+
+      const avgCpcText = total.clicks ? fmt1(total.spend / total.clicks) : "0";
+      const avgCtrText = totalImpressions ? fmt1((total.clicks / totalImpressions) * 100) + "%" : fmt1(avg(summaryRecords, "ctr")) + "%";
+      const avgCpmText = totalImpressions ? fmt1((total.spend / totalImpressions) * 1000) : "0";
+      const newCpaText = total.newLineAdds ? fmt1(total.spend / total.newLineAdds) : "0";
+      const textCvCpaText = total.textCv ? fmt(total.spend / total.textCv) : "0";
+      const closeCpaText = total.singleClose ? fmt(total.spend / total.singleClose) : "0";
+
+      const changes = summaryRecords
+        .filter(r => (r.change && String(r.change).trim()) || (r.adjustment && String(r.adjustment).trim()))
+        .sort((a,b) => ((b.date || "") + " " + (b.time || "")).localeCompare((a.date || "") + " " + (a.time || "")))
+        .slice(0, 8)
+        .map(r => {
+          const date = `${r.date || ""}${r.time ? " " + r.time : ""}`;
+          const c = r.change ? `<div><strong>${escapeHtml(date)} 広告変更：</strong>${escapeHtml(r.change)}</div>` : "";
+          const a = r.adjustment ? `<div><strong>${escapeHtml(date)} 調整：</strong>${escapeHtml(r.adjustment)}</div>` : "";
+          return c + a;
+        }).join("");
+
+      const blockSummary = [
+        ["通1", total.blocks.afterTsu1],["通2", total.blocks.afterTsu2],["通3", total.blocks.afterTsu3],
+        ["通4", total.blocks.afterTsu4],["通5", total.blocks.afterTsu5],["通6", total.blocks.afterTsu6],["通7", total.blocks.afterTsu7],
+        ["リマ1", total.blocks.afterRemind1],["リマ2", total.blocks.afterRemind2],["リマ3", total.blocks.afterRemind3],
+        ["文字CV後", total.blocks.afterTextCv],["観測完了後", total.blocks.afterComplete],["詳細確認後", total.blocks.afterDetail],
+        ["FAQ後", total.blocks.afterFaq],["日程後", total.blocks.afterSchedule],["支払前", total.blocks.beforePay]
+      ].filter(([,v]) => v > 0).map(([k,v]) => `${k}:${v}`).join(" / ") || "ブロック地点の入力なし";
+
+      const nextWatchList = summaryRecords
+        .filter(r => r.nextWatch && String(r.nextWatch).trim())
+        .sort((a,b) => ((b.date || "") + " " + (b.time || "")).localeCompare((a.date || "") + " " + (a.time || "")))
+        .slice(0, 6)
+        .map(r => {
+          const date = `${r.date || ""}${r.time ? " " + r.time : ""}`;
+          return `<div><strong>${escapeHtml(date)}：</strong>${escapeHtml(r.nextWatch)}</div>`;
+        })
+        .join("");
+
+      const cards = [
+        ["spend", "広告費", fmt(total.spend), "number", false],
+        ["clicks", "クリック", fmt(total.clicks), "number", false],
+        ["avgCpc", "平均CPC", avgCpcText, "decimal", true],
+        ["avgCtr", "平均CTR", avgCtrText, "percent", false],
+        ["avgCpm", "平均CPM", avgCpmText, "decimal", true],
+        ["newCpa", "平均新規追加CPA", newCpaText, "decimal", true],
+        ["lineTap", "LINE追加タップ", fmt(total.lineTap), "number", false],
+        ["tapRate", "LINE追加タップ率", pct(total.lineTap, total.clicks), "percent", false],
+        ["newLineAdds", "新規追加完了", fmt(total.newLineAdds), "number", false],
+        ["clickToNewAdd", "クリック→新規追加", pct(total.newLineAdds, total.clicks), "percent", false],
+        ["tapToNewAdd", "タップ→新規追加", pct(total.newLineAdds, total.lineTap), "percent", false],
+        ["readRate", "新規追加→能動読了", pct(total.fullReadCount, total.newLineAdds), "percent", false],
+        ["textCv", "文字CV", fmt(total.textCv), "number", false],
+        ["textCvCpa", "文字CV獲得CPA", textCvCpaText, "number", true],
+        ["newAddToTextCv", "新規追加→文字CV", pct(total.textCv, total.newLineAdds), "percent", false],
+        ["textCvToComplete", "文字CV→観測完了", pct(total.observationComplete, total.textCv), "percent", false],
+        ["completeToDetail", "観測完了→詳細確認", pct(total.detailConfirm, total.observationComplete), "percent", false],
+        ["detailToSchedule", "詳細確認→日程送付", pct(total.scheduleSend, total.detailConfirm), "percent", false],
+        ["scheduleToClose", "日程送付→単発成約", pct(total.singleClose, total.scheduleSend), "percent", false],
+        ["singleClose", "単発成約", fmt(total.singleClose), "number", false],
+        ["newAddToClose", "新規追加→単発成約", pct(total.singleClose, total.newLineAdds), "percent", false],
+        ["blockRate", "新規追加に対するブロック率", pct(totalBlocks, total.newLineAdds), "percent", true],
+        ["closeCpa", "広告費÷単発成約", closeCpaText, "number", true]
+      ];
+
+      box.innerHTML = `
+        <div class="ai-share-head">
+          <div>
+            <div class="ai-share-title">AI壁打ち用サマリー</div>
+            <div class="ai-share-period">表示期間：${escapeHtml(periodText)} / 記録数：${summaryRecords.length}件${compareText ? `<br>比較対象：${escapeHtml(compareText)} / ${compareRecords.length}件` : ""}</div>
+          </div>
+          <div class="ai-share-period">主要数字・変更点・ブロック傾向を1枚で確認</div>
+        </div>
+        <div class="ai-share-grid">
+          ${cards.map(([key, label, value, type, lowerIsBetter]) => {
+            const currentValue = compareValue(key, total);
+            const compareValueItem = compareTotal ? compareValue(key, compareTotal) : null;
+            return `
+              <div class="ai-share-card">
+                <div class="label">${escapeHtml(label)}</div>
+                <div class="num">${escapeHtml(value)}</div>
+                ${compareTotal ? diffHtml(currentValue, compareValueItem, type, lowerIsBetter) : ""}
+              </div>
+            `;
+          }).join("")}
+        </div>
+        <div class="ai-share-notes">
+          <div class="ai-share-note"><strong>広告変更点・調整点</strong>${changes || `<div>期間内に記録なし</div>`}</div>
+          <div class="ai-share-note"><strong>次に見るポイント</strong>${nextWatchList || `<div>期間内に記録なし</div>`}</div>
+          <div class="ai-share-note"><strong>ブロック地点</strong><div>${escapeHtml(blockSummary)}</div></div>
+        </div>
+      `;
+    }
+
+    function renderSummary() {
+      const summaryRecords = getSummaryRecords();
+      const compareRecords = getCompareRecords();
+      renderTrendCharts(summaryRecords);
+
+      const total = summaryRecords.reduce((acc, r) => {
+        acc.spend += num(r.spend);
+        acc.clicks += num(r.clicks);
+        acc.lineTap += num(r.lineTap);
+        acc.lineAdds += num(r.lineAdds);
+        acc.newLineAdds += effectiveNewLineAdds(r);
+        acc.fullReadCount += num(r.fullReadCount);
+        acc.textCv += num(r.textCv);
+        acc.observationComplete += num(r.observationComplete);
+        acc.detailConfirm += num(r.detailConfirm);
+        acc.scheduleSend += num(r.scheduleSend);
+        acc.singleClose += num(r.singleClose);
+
+        const bp = normalizeBlockPoint(r.blockPoint || "");
+        if (bp === "通１の直後") acc.blocks.afterTsu1 += 1;
+        else if (bp === "通２の直後") acc.blocks.afterTsu2 += 1;
+        else if (bp === "通３の直後") acc.blocks.afterTsu3 += 1;
+        else if (bp === "通４の直後") acc.blocks.afterTsu4 += 1;
+        else if (bp === "通５の直後") acc.blocks.afterTsu5 += 1;
+        else if (bp === "通６の直後") acc.blocks.afterTsu6 += 1;
+        else if (bp === "通７の直後") acc.blocks.afterTsu7 += 1;
+        else if (bp === "リマインド１直後") acc.blocks.afterRemind1 += 1;
+        else if (bp === "リマインド２直後") acc.blocks.afterRemind2 += 1;
+        else if (bp === "リマインド３直後") acc.blocks.afterRemind3 += 1;
+        else if (bp === "文字CV後") acc.blocks.afterTextCv += 1;
+        else if (bp === "文字観測完了直後") acc.blocks.afterComplete += 1;
+        else if (bp === "単発詳細確認直後") acc.blocks.afterDetail += 1;
+        else if (bp === "FAQなどの情報確認後") acc.blocks.afterFaq += 1;
+        else if (bp === "日程候補送付後") acc.blocks.afterSchedule += 1;
+        else if (bp === "支払い前") acc.blocks.beforePay += 1;
+        else acc.blocks.none += 1;
+
+        return acc;
+      }, {
+        spend:0, clicks:0, lineTap:0, lineAdds:0, fullReadCount:0, textCv:0,
+        observationComplete:0, detailConfirm:0, scheduleSend:0, singleClose:0,
+        blocks:{
+          afterTsu1:0, afterTsu2:0, afterTsu3:0, afterTsu4:0, afterTsu5:0, afterTsu6:0, afterTsu7:0,
+          afterRemind1:0, afterRemind2:0, afterRemind3:0,
+          afterTextCv:0, afterComplete:0, afterDetail:0, afterFaq:0, afterSchedule:0, beforePay:0, none:0
+        }
+      });
+
+      const dated = summaryRecords.map(r => r.date).filter(Boolean).sort();
+      if (dated.length) {
+        const start = dated[0];
+        const end = dated[dated.length - 1];
+        $("summaryPeriod").textContent = start === end ? start : `${start} 〜 ${end}`;
+        $("summaryPeriodSub").textContent = `${summaryRecords.length}件の記録を集計`;
+      } else {
+        $("summaryPeriod").textContent = summaryStartDate || summaryEndDate
+          ? `${summaryStartDate || "開始指定なし"} 〜 ${summaryEndDate || "終了指定なし"}`
+          : "記録なし";
+        $("summaryPeriodSub").textContent = records.length
+          ? "指定期間内の記録はありません。"
+          : "集計対象の記録がまだありません。";
+      }
+
+      const totalImpressions = summaryRecords.reduce((sum, r) => sum + estimatedImpressions(r), 0);
+      const checkedNewLineAdds = summaryRecords.reduce((sum, r) => sum + effectiveNewLineAdds(r), 0);
+      total.newLineAdds = checkedNewLineAdds;
+      total.totalImpressions = totalImpressions;
+      total.totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length;
+
+      const compareTotal = compareRecords.length ? calcTotalsForCompare(compareRecords) : null;
+      const compareNote = $("comparePeriodNote");
+      if (compareNote) {
+        if (compareRecords.length) {
+          const cd = compareRecords.map(r => r.date).filter(Boolean).sort();
+          compareNote.textContent = `比較対象：${cd[0]} 〜 ${cd[cd.length - 1]} / ${compareRecords.length}件`;
+        } else {
+          compareNote.textContent = "比較対象期間を入れると、AI壁打ち用サマリーに差分を表示します。";
+        }
+      }
+
+      renderAiShareSummary(summaryRecords, total, totalImpressions, compareTotal, compareRecords);
+
+      $("sumSpend").textContent = fmt(total.spend);
+      $("sumClicks").textContent = fmt(total.clicks);
+      $("avgCpc").textContent = total.clicks ? fmt1(total.spend / total.clicks) : "0";
+      $("avgCtr").textContent = totalImpressions ? fmt1((total.clicks / totalImpressions) * 100) + "%" : fmt1(avg(summaryRecords, "ctr")) + "%";
+      $("avgCpm").textContent = totalImpressions ? fmt1((total.spend / totalImpressions) * 1000) : "0";
+      $("avgLineCpa").textContent = total.newLineAdds ? fmt1(total.spend / total.newLineAdds) : "0";
+
+      $("sumLineTap").textContent = fmt(total.lineTap);
+      $("avgAddRate").textContent = pct(total.lineTap, total.clicks);
+
+      $("sumLineAdds").textContent = fmt(total.lineAdds);
+      $("sumNewLineAdds").textContent = fmt(total.newLineAdds);
+      $("sumFullReadCount").textContent = fmt(total.fullReadCount);
+      $("sumTextCv").textContent = fmt(total.textCv);
+      $("sumObservationComplete").textContent = fmt(total.observationComplete);
+      $("sumDetailConfirm").textContent = fmt(total.detailConfirm);
+      $("sumScheduleSend").textContent = fmt(total.scheduleSend);
+      $("sumSingleClose").textContent = fmt(total.singleClose);
+
+      const newAddsEnteredCount = summaryRecords.filter(r => hasValue(r.newLineAdds)).length;
+      const newAddsPositiveCount = summaryRecords.filter(r => effectiveNewLineAdds(r) > 0).length;
+      const note = $("newLineAddsNote");
+      if (note) {
+        if (summaryRecords.length && newAddsEnteredCount === 0) {
+          note.textContent = "※ 指定期間内の記録に「新規追加完了数」が未入力です。v8以前の記録は、編集画面から新規追加完了数を入力すると集計に反映されます。";
+        } else if (summaryRecords.length && newAddsPositiveCount === 0) {
+          note.textContent = "※ 指定期間内の新規追加完了数はすべて0です。";
+        } else {
+          note.textContent = "";
+        }
+      }
+
+      $("rateClickToAdd").textContent = pct(total.newLineAdds, total.clicks);
+      $("rateTapToNewAdd").textContent = pct(total.newLineAdds, total.lineTap);
+      $("rateNewAddToFullRead").textContent = pct(total.fullReadCount, total.newLineAdds);
+      $("rateAddToTextCv").textContent = pct(total.textCv, total.newLineAdds);
+      $("rateTextCvToComplete").textContent = pct(total.observationComplete, total.textCv);
+      $("rateCompleteToDetail").textContent = pct(total.detailConfirm, total.observationComplete);
+      $("rateDetailToSchedule").textContent = pct(total.scheduleSend, total.detailConfirm);
+      $("rateScheduleToClose").textContent = pct(total.singleClose, total.scheduleSend);
+      $("rateAddToClose").textContent = pct(total.singleClose, total.newLineAdds);
+
+      const totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length;
+      $("rateBlockToNewAdd").textContent = pct(totalBlocks, total.newLineAdds);
+      $("costPerTextCv").textContent = total.textCv ? fmt(total.spend / total.textCv) : "0";
+      $("costPerClose").textContent = total.singleClose ? fmt(total.spend / total.singleClose) : "0";
+
+      $("blockAfterTsu1").textContent = fmt(total.blocks.afterTsu1);
+      $("blockAfterTsu2").textContent = fmt(total.blocks.afterTsu2);
+      $("blockAfterTsu3").textContent = fmt(total.blocks.afterTsu3);
+      $("blockAfterTsu4").textContent = fmt(total.blocks.afterTsu4);
+      $("blockAfterTsu5").textContent = fmt(total.blocks.afterTsu5);
+      $("blockAfterTsu6").textContent = fmt(total.blocks.afterTsu6);
+      $("blockAfterTsu7").textContent = fmt(total.blocks.afterTsu7);
+      $("blockAfterRemind1").textContent = fmt(total.blocks.afterRemind1);
+      $("blockAfterRemind2").textContent = fmt(total.blocks.afterRemind2);
+      $("blockAfterRemind3").textContent = fmt(total.blocks.afterRemind3);
+      $("blockAfterTextCv").textContent = fmt(total.blocks.afterTextCv);
+      $("blockAfterComplete").textContent = fmt(total.blocks.afterComplete);
+      $("blockAfterDetail").textContent = fmt(total.blocks.afterDetail);
+      $("blockAfterFaq").textContent = fmt(total.blocks.afterFaq);
+      $("blockAfterSchedule").textContent = fmt(total.blocks.afterSchedule);
+      $("blockBeforePay").textContent = fmt(total.blocks.beforePay);
+      $("blockNone").textContent = fmt(total.blocks.none);
+    }
+
+    function renderHandover() {
+      const box = $("handoverList");
+      const sorted = [...records].sort((a,b) => (b.date || "").localeCompare(a.date || "")).slice(0, 10);
+
+      if (!sorted.length) {
+        box.innerHTML = `<div class="small">まだ記録がありません。</div>`;
+        return;
+      }
+
+      box.innerHTML = sorted.map(r => `
+        <div class="memo-box">
+          <div><strong>${escapeHtml(r.date || "")}</strong> / ${escapeHtml(r.target || "")}</div>
+          ${r.change ? `<div class="small" style="margin-top:6px;"><strong>広告変更点：</strong>${escapeHtml(r.change)}</div>` : ""}
+          ${r.blockPoint ? `<div class="small" style="margin-top:6px;"><strong>ブロック地点：</strong>${escapeHtml(r.blockPoint)}</div>` : ""}
+          ${r.blockDetail ? `<div class="small" style="margin-top:6px;"><strong>ブロック補足：</strong>${escapeHtml(r.blockDetail)}</div>` : ""}
+          ${r.hypothesis ? `<div class="small" style="margin-top:6px;"><strong>仮説：</strong>${escapeHtml(r.hypothesis)}</div>` : ""}
+          ${r.adjustment ? `<div class="small" style="margin-top:6px;"><strong>調整した内容：</strong>${escapeHtml(r.adjustment)}</div>` : ""}
+          ${r.nextWatch ? `<div class="small" style="margin-top:6px;"><strong>次に見るポイント：</strong>${escapeHtml(r.nextWatch)}</div>` : ""}
+        </div>
+      `).join("");
+    }
+
+    function renderAll() {
+      $("recordCount").textContent = records.length;
+      renderHistory();
+      renderSummary();
+      renderHandover();
+    }
+
+    window.editRecord = function(id) {
+      const record = records.find(r => r.id === id);
+      if (!record) return;
+      editingId = id;
+      setFormData(record);
+      document.querySelector("#recordView button[type='submit']").textContent = "更新する";
+      switchView("recordView");
+      window.scrollTo({top:0,behavior:"smooth"});
+    }
+
+    window.deleteRecord = async function(id) {
+      if (!confirm("この記録を削除しますか？")) return;
+      try {
+        await deleteRecordDb(id);
+        records = records.filter(r => r.id !== id);
+        renderAll();
+      } catch (e) { /* alert済み */ }
+    }
+
+    function switchView(viewId) {
+      document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      $(viewId).classList.add("active");
+      document.querySelector(`.tab-btn[data-view="${viewId}"]`).classList.add("active");
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchView(btn.dataset.view));
+    });
+
+    document.querySelectorAll("#blockPointGroup .pill").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const current = $("blockPoint").value;
+        setBlockPoint(current === btn.dataset.value ? "" : btn.dataset.value);
+      });
+    });
+
+    function showSaveMessage(message) {
+      const box = $("saveMessage");
+      if (!box) return;
+      box.textContent = message;
+      box.classList.add("show");
+      window.clearTimeout(window.__saveMessageTimer);
+      window.__saveMessageTimer = window.setTimeout(() => {
+        box.classList.remove("show");
+      }, 2600);
+    }
+
+    $("pdcaForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = getFormData();
+      const wasEditing = Boolean(editingId);
+
+      // 保存先レコードのidを決定：編集中→そのid／同じ日付が既にある→そのid／無ければ新規
+      let targetId = editingId;
+      if (!targetId) {
+        const existing = records.find(r => r.date === data.date);
+        if (existing) targetId = existing.id;
+      }
+
+      let rec;
+      if (targetId) {
+        const base = records.find(r => r.id === targetId) || {};
+        rec = { ...base, ...data, id: targetId };
+      } else {
+        rec = { id: crypto.randomUUID(), createdAt: new Date().toISOString(), ...data };
+      }
+
+      try {
+        await upsertRecord(rec);
+        const idx = records.findIndex(r => r.id === rec.id);
+        if (idx >= 0) records[idx] = { ...records[idx], ...rec };
+        else records.push(rec);
+        renderAll();
+        clearForm();
+        showSaveMessage(wasEditing ? "更新しました。" : "保存しました。");
+      } catch (err) { /* alert済み */ }
+    });
+
+    $("exportJsonBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(records, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "jigyo-seiryu-pdca-v3.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    $("importJsonBtn").addEventListener("click", () => $("jsonFile").click());
+
+    $("jsonFile").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        const imported = JSON.parse(await file.text());
+        if (!Array.isArray(imported)) throw new Error();
+        // idやcreatedAtが無い記録は補完（v30エクスポート互換）
+        const prepared = imported.map(r => ({
+          id: r.id || crypto.randomUUID(),
+          createdAt: r.createdAt || new Date().toISOString(),
+          ...r
+        }));
+        const { error } = await sb.from("pdca_records").upsert(prepared, { onConflict: "id" });
+        if (error) throw error;
+        await refreshData();
+        alert(prepared.length + "件を読み込み、クラウドに保存しました。");
+      } catch (err) {
+        alert("JSONの読み込みに失敗しました。" + (err && err.message ? "\n" + err.message : ""));
+      }
+      e.target.value = "";
+    });
+
+    $("exportCsvBtn").addEventListener("click", () => {
+      const headers = fields;
+      const lines = [
+        headers.join(","),
+        ...records.map(r => headers.map(h => `"${String(r[h] ?? "").replaceAll('"','""')}"`).join(","))
+      ];
+      const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "jigyo-seiryu-pdca-v3.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    $("clearAllBtn").addEventListener("click", async () => {
+      if (!confirm("全記録を削除しますか？（クラウド上のデータも削除されます）")) return;
+      try {
+        await clearAllDb();
+        records = [];
+        renderAll();
+      } catch (e) { /* alert済み */ }
+    });
+
+    $("date").value = today();
+    setBlockPoint("");
+
+    // ===== 認証（マジックリンク） =====
+    async function initAppOnce() {
+      if (appInitialized) return;
+      appInitialized = true;
+      await refreshData();
+    }
+
+    function showApp(session) {
+      document.body.classList.add("authed");
+      const who = $("authWho");
+      if (who) who.textContent = (session && session.user ? session.user.email : "") + " でログイン中";
+      const bar = $("authBar");
+      if (bar) bar.style.display = "flex";
+      initAppOnce();
+    }
+
+    function showLogin() {
+      document.body.classList.remove("authed");
+      const bar = $("authBar");
+      if (bar) bar.style.display = "none";
+    }
+
+    async function bootstrapAuth() {
+      if (SUPABASE_URL.includes("YOUR-") || SUPABASE_ANON_KEY.includes("YOUR-")) {
+        $("authMsg").textContent = "SUPABASE_URL と SUPABASE_ANON_KEY をコード上部に設定してください。";
+        return;
+      }
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) showApp(session); else showLogin();
+      sb.auth.onAuthStateChange((_event, session) => {
+        if (session) showApp(session); else showLogin();
+      });
+    }
+
+    $("authSendBtn").addEventListener("click", async () => {
+      const email = $("authEmail").value.trim();
+      if (!email) { $("authMsg").textContent = "メールアドレスを入力してください。"; return; }
+      $("authSendBtn").disabled = true;
+      $("authMsg").textContent = "送信中...";
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + window.location.pathname }
+      });
+      $("authSendBtn").disabled = false;
+      $("authMsg").textContent = error
+        ? ("送信に失敗しました: " + error.message)
+        : "ログインリンクをメールに送りました。メールを開いてリンクを踏んでください。";
+    });
+
+    $("authEmail").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); $("authSendBtn").click(); }
+    });
+
+    $("logoutBtn").addEventListener("click", async () => { await sb.auth.signOut(); });
+    $("refreshBtn").addEventListener("click", () => refreshData());
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && document.body.classList.contains("authed")) refreshData();
+    });
+
+    bootstrapAuth();
+  </script>
+  <button type="button" class="screenshot-exit-btn" onclick="toggleScreenshotMode()">通常表示に戻す</button>
+  <div id="chartTooltip" class="chart-tooltip"></div>
+</body>
+</html>

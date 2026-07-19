@@ -833,6 +833,7 @@
     });
 
     let records = [];
+    let prolineByDate = {}; // { "YYYY-MM-DD": { funnel:{...}, blocks:{label:count} } }
     let appInitialized = false;
     let editingId = null;
     let summaryStartDate = "";
@@ -907,10 +908,43 @@
       const { data, error } = await sb.from("pdca_records").select("*");
       if (error) { console.error(error); alert("データ読み込みに失敗しました: " + error.message); return; }
       records = data || [];
+      await loadProline();
+      mergeProlineFunnel();
+    }
+
+    // プロライン日次カウントを読み込む
+    async function loadProline() {
+      prolineByDate = {};
+      const { data, error } = await sb.from("proline_daily").select("*");
+      if (error) { console.warn("proline_daily 読込", error.message); return; }
+      (data || []).forEach(r => {
+        const d = r.date;
+        if (!prolineByDate[d]) prolineByDate[d] = { funnel: {}, blocks: {} };
+        if (String(r.metric).startsWith("block:")) {
+          prolineByDate[d].blocks[String(r.metric).slice(6)] = num(r.count);
+        } else {
+          prolineByDate[d].funnel[r.metric] = num(r.count);
+        }
+      });
+    }
+
+    // ファネル系（追加完了・能動読了・文字CV・観測完了・単発成約）をプロラインの値で上書き
+    const PROLINE_FUNNEL_FIELDS = ["newLineAdds", "fullReadCount", "textCv", "observationComplete", "singleClose"];
+    function mergeProlineFunnel() {
+      const byDate = {};
+      records.forEach(r => { if (r.date) byDate[r.date] = r; });
+      Object.keys(prolineByDate).forEach(d => {
+        let rec = byDate[d];
+        if (!rec) { rec = { id: crypto.randomUUID(), date: d, _virtual: true }; records.push(rec); byDate[d] = rec; }
+        const f = prolineByDate[d].funnel || {};
+        PROLINE_FUNNEL_FIELDS.forEach(k => { if (f[k] != null) rec[k] = String(f[k]); });
+      });
     }
 
     async function upsertRecord(rec) {
-      const { error } = await sb.from("pdca_records").upsert(rec, { onConflict: "id" });
+      const clean = { ...rec };
+      delete clean._virtual; // 実在しないカラムを除去
+      const { error } = await sb.from("pdca_records").upsert(clean, { onConflict: "id" });
       if (error) { alert("保存に失敗しました: " + error.message); throw error; }
     }
 
@@ -1541,7 +1575,27 @@
       const checkedNewLineAdds = summaryRecords.reduce((sum, r) => sum + effectiveNewLineAdds(r), 0);
       total.newLineAdds = checkedNewLineAdds;
       total.totalImpressions = totalImpressions;
-      total.totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length;
+
+      // プロラインのブロック地点カウントを期間内で合算し、total.blocks に加算
+      const BLOCK_KEY = {
+        "通1の直後":"afterTsu1","通2の直後":"afterTsu2","通3の直後":"afterTsu3","通4の直後":"afterTsu4",
+        "通5の直後":"afterTsu5","通6の直後":"afterTsu6","通7の直後":"afterTsu7",
+        "リマインド1直後":"afterRemind1","リマインド2直後":"afterRemind2","リマインド3直後":"afterRemind3",
+        "文字CV後":"afterTextCv","文字観測完了直後":"afterComplete","単発詳細確認直後":"afterDetail",
+        "FAQなどの情報確認後":"afterFaq","日程候補送付後":"afterSchedule","支払い前":"beforePay"
+      };
+      let prolineBlockTotal = 0;
+      [...new Set(summaryRecords.map(r => r.date).filter(Boolean))].forEach(d => {
+        const blocks = (prolineByDate[d] && prolineByDate[d].blocks) || {};
+        Object.keys(blocks).forEach(label => {
+          const cnt = num(blocks[label]);
+          const key = BLOCK_KEY[label];
+          if (key) total.blocks[key] += cnt; else total.blocks.none += cnt;
+          prolineBlockTotal += cnt;
+        });
+      });
+      total._prolineBlocks = prolineBlockTotal;
+      total.totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length + prolineBlockTotal;
 
       const compareTotal = compareRecords.length ? calcTotalsForCompare(compareRecords) : null;
       const compareNote = $("comparePeriodNote");
@@ -1598,7 +1652,7 @@
       $("rateScheduleToClose").textContent = pct(total.singleClose, total.scheduleSend);
       $("rateAddToClose").textContent = pct(total.singleClose, total.newLineAdds);
 
-      const totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length;
+      const totalBlocks = summaryRecords.filter(r => normalizeBlockPoint(r.blockPoint || "")).length + (total._prolineBlocks || 0);
       $("rateBlockToNewAdd").textContent = pct(totalBlocks, total.newLineAdds);
       $("costPerTextCv").textContent = total.textCv ? fmt(total.spend / total.textCv) : "0";
       $("costPerClose").textContent = total.singleClose ? fmt(total.spend / total.singleClose) : "0";

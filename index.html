@@ -588,6 +588,10 @@
               <input type="number" step="1" id="fullReadCount" placeholder="0" />
             </div>
             <div class="field">
+              <label for="tomarioku">止まりを置くタップ数</label>
+              <input type="number" step="1" id="tomarioku" placeholder="0" />
+            </div>
+            <div class="field">
               <label for="textCv">文字CV数</label>
               <input type="number" step="1" id="textCv" placeholder="0" />
             </div>
@@ -754,6 +758,7 @@
           <div class="card"><div class="k">追加完了数 合計</div><div class="v" id="sumLineAdds">0</div></div>
           <div class="card"><div class="k">新規追加完了数 合計</div><div class="v" id="sumNewLineAdds">0</div></div>
           <div class="card"><div class="k">能動読了数 合計</div><div class="v" id="sumFullReadCount">0</div></div>
+          <div class="card"><div class="k">止まりを置くタップ数 合計</div><div class="v" id="sumCtaTap">0</div></div>
           <div class="card"><div class="k">文字CV数 合計</div><div class="v" id="sumTextCv">0</div></div>
           <div class="card"><div class="k">文字観測完了数 合計</div><div class="v" id="sumObservationComplete">0</div></div>
           <div class="card"><div class="k">単発詳細確認数 合計</div><div class="v" id="sumDetailConfirm">0</div></div>
@@ -770,6 +775,8 @@
           <div class="card"><div class="k">クリック → 新規追加完了</div><div class="v" id="rateClickToAdd">0%</div></div>
           <div class="card"><div class="k">LINE追加タップ → 新規追加完了</div><div class="v" id="rateTapToNewAdd">0%</div></div>
           <div class="card"><div class="k">新規追加完了 → 能動読了</div><div class="v" id="rateNewAddToFullRead">0%</div></div>
+          <div class="card"><div class="k">能動読了 → 止まりを置くタップ</div><div class="v" id="rateReadToCta">0%</div></div>
+          <div class="card"><div class="k">止まりを置くタップ → 文字CV</div><div class="v" id="rateCtaToTextCv">0%</div></div>
           <div class="card"><div class="k">新規追加完了 → 文字CV</div><div class="v" id="rateAddToTextCv">0%</div></div>
           <div class="card"><div class="k">文字CV → 文字観測完了</div><div class="v" id="rateTextCvToComplete">0%</div></div>
           <div class="card"><div class="k">文字観測完了 → 詳細確認</div><div class="v" id="rateCompleteToDetail">0%</div></div>
@@ -844,7 +851,7 @@
     const fields = [
       "date","time","target","change",
       "cpc","ctr","clicks","lineCpa","cpm","spend",
-      "lineTap","addRate","lineAdds","newLineAdds","fullReadCount","textCv","observationComplete","detailConfirm","scheduleSend","singleClose",
+      "lineTap","addRate","lineAdds","newLineAdds","fullReadCount","tomarioku","textCv","observationComplete","detailConfirm","scheduleSend","singleClose",
       "blockPoint","blockDetail","hypothesis","adjustment","nextWatch"
     ];
 
@@ -929,7 +936,7 @@
     }
 
     // ファネル系（追加完了・能動読了・文字CV・観測完了・単発成約）をプロラインの値で上書き
-    const PROLINE_FUNNEL_FIELDS = ["newLineAdds", "fullReadCount", "textCv", "observationComplete", "singleClose"];
+    const PROLINE_FUNNEL_FIELDS = ["newLineAdds", "fullReadCount", "tomarioku", "textCv", "observationComplete", "singleClose"];
     function mergeProlineFunnel() {
       const byDate = {};
       records.forEach(r => { if (r.date) byDate[r.date] = r; });
@@ -1520,6 +1527,7 @@
         acc.lineAdds += num(r.lineAdds);
         acc.newLineAdds += effectiveNewLineAdds(r);
         acc.fullReadCount += num(r.fullReadCount);
+        acc.tomarioku += num(r.tomarioku);
         acc.textCv += num(r.textCv);
         acc.observationComplete += num(r.observationComplete);
         acc.detailConfirm += num(r.detailConfirm);
@@ -1547,7 +1555,7 @@
 
         return acc;
       }, {
-        spend:0, clicks:0, lineTap:0, lineAdds:0, fullReadCount:0, textCv:0,
+        spend:0, clicks:0, lineTap:0, lineAdds:0, fullReadCount:0, tomarioku:0, textCv:0,
         observationComplete:0, detailConfirm:0, scheduleSend:0, singleClose:0,
         blocks:{
           afterTsu1:0, afterTsu2:0, afterTsu3:0, afterTsu4:0, afterTsu5:0, afterTsu6:0, afterTsu7:0,
@@ -1623,6 +1631,7 @@
       $("sumLineAdds").textContent = fmt(total.lineAdds);
       $("sumNewLineAdds").textContent = fmt(total.newLineAdds);
       $("sumFullReadCount").textContent = fmt(total.fullReadCount);
+      $("sumCtaTap").textContent = fmt(total.tomarioku);
       $("sumTextCv").textContent = fmt(total.textCv);
       $("sumObservationComplete").textContent = fmt(total.observationComplete);
       $("sumDetailConfirm").textContent = fmt(total.detailConfirm);
@@ -1645,6 +1654,8 @@
       $("rateClickToAdd").textContent = pct(total.newLineAdds, total.clicks);
       $("rateTapToNewAdd").textContent = pct(total.newLineAdds, total.lineTap);
       $("rateNewAddToFullRead").textContent = pct(total.fullReadCount, total.newLineAdds);
+      $("rateReadToCta").textContent = pct(total.tomarioku, total.fullReadCount);
+      $("rateCtaToTextCv").textContent = pct(total.textCv, total.tomarioku);
       $("rateAddToTextCv").textContent = pct(total.textCv, total.newLineAdds);
       $("rateTextCvToComplete").textContent = pct(total.observationComplete, total.textCv);
       $("rateCompleteToDetail").textContent = pct(total.detailConfirm, total.observationComplete);

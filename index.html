@@ -629,6 +629,7 @@
             <button type="button" class="pill" data-value="リマインド１直後">リマインド１直後</button>
             <button type="button" class="pill" data-value="リマインド２直後">リマインド２直後</button>
             <button type="button" class="pill" data-value="リマインド３直後">リマインド３直後</button>
+            <button type="button" class="pill" data-value="止まりを置くタップ後">止まりを置くタップ後</button>
             <button type="button" class="pill" data-value="文字CV後">文字CV後</button>
             <button type="button" class="pill" data-value="文字観測完了直後">文字観測完了直後</button>
             <button type="button" class="pill" data-value="単発詳細確認直後">単発詳細確認直後</button>
@@ -810,6 +811,7 @@
           <div class="card"><div class="k">リマインド１直後</div><div class="v" id="blockAfterRemind1">0</div></div>
           <div class="card"><div class="k">リマインド２直後</div><div class="v" id="blockAfterRemind2">0</div></div>
           <div class="card"><div class="k">リマインド３直後</div><div class="v" id="blockAfterRemind3">0</div></div>
+          <div class="card"><div class="k">止まりを置くタップ後</div><div class="v" id="blockAfterTomarioku">0</div></div>
           <div class="card"><div class="k">文字CV後</div><div class="v" id="blockAfterTextCv">0</div></div>
           <div class="card"><div class="k">文字観測完了直後</div><div class="v" id="blockAfterComplete">0</div></div>
           <div class="card"><div class="k">単発詳細確認直後</div><div class="v" id="blockAfterDetail">0</div></div>
@@ -1134,13 +1136,13 @@
 
     function emptyTotals() {
       return {
-        spend:0, clicks:0, lineTap:0, lineAdds:0, newLineAdds:0, fullReadCount:0, textCv:0,
+        spend:0, clicks:0, lineTap:0, lineAdds:0, newLineAdds:0, fullReadCount:0, tomarioku:0, textCv:0,
         observationComplete:0, detailConfirm:0, scheduleSend:0, singleClose:0,
         totalImpressions:0, totalBlocks:0,
         blocks:{
           afterTsu1:0, afterTsu2:0, afterTsu3:0, afterTsu4:0, afterTsu5:0, afterTsu6:0, afterTsu7:0,
           afterRemind1:0, afterRemind2:0, afterRemind3:0,
-          afterTextCv:0, afterComplete:0, afterDetail:0, afterFaq:0, afterSchedule:0, beforePay:0, none:0
+          afterTomarioku:0, afterTextCv:0, afterComplete:0, afterDetail:0, afterFaq:0, afterSchedule:0, beforePay:0, none:0
         }
       };
     }
@@ -1154,6 +1156,7 @@
         total.lineAdds += num(r.lineAdds);
         total.newLineAdds += effectiveNewLineAdds(r);
         total.fullReadCount += num(r.fullReadCount);
+        total.tomarioku += num(r.tomarioku);
         total.textCv += num(r.textCv);
         total.observationComplete += num(r.observationComplete);
         total.detailConfirm += num(r.detailConfirm);
@@ -1179,6 +1182,7 @@
         clickToNewAdd: total.clicks ? (total.newLineAdds / total.clicks) * 100 : 0,
         tapToNewAdd: total.lineTap ? (total.newLineAdds / total.lineTap) * 100 : 0,
         readRate: total.newLineAdds ? (total.fullReadCount / total.newLineAdds) * 100 : 0,
+        readToTomarioku: total.fullReadCount ? (total.tomarioku / total.fullReadCount) * 100 : 0,
         textCv: total.textCv,
         textCvCpa: total.textCv ? total.spend / total.textCv : 0,
         newAddToTextCv: total.newLineAdds ? (total.textCv / total.newLineAdds) * 100 : 0,
@@ -1446,6 +1450,7 @@
         ["通1", total.blocks.afterTsu1],["通2", total.blocks.afterTsu2],["通3", total.blocks.afterTsu3],
         ["通4", total.blocks.afterTsu4],["通5", total.blocks.afterTsu5],["通6", total.blocks.afterTsu6],["通7", total.blocks.afterTsu7],
         ["リマ1", total.blocks.afterRemind1],["リマ2", total.blocks.afterRemind2],["リマ3", total.blocks.afterRemind3],
+        ["止まり後", total.blocks.afterTomarioku],
         ["文字CV後", total.blocks.afterTextCv],["観測完了後", total.blocks.afterComplete],["詳細確認後", total.blocks.afterDetail],
         ["FAQ後", total.blocks.afterFaq],["日程後", total.blocks.afterSchedule],["支払前", total.blocks.beforePay]
       ].filter(([,v]) => v > 0).map(([k,v]) => `${k}:${v}`).join(" / ") || "ブロック地点の入力なし";
@@ -1473,6 +1478,7 @@
         ["clickToNewAdd", "クリック→新規追加", pct(total.newLineAdds, total.clicks), "percent", false],
         ["tapToNewAdd", "タップ→新規追加", pct(total.newLineAdds, total.lineTap), "percent", false],
         ["readRate", "新規追加→能動読了", pct(total.fullReadCount, total.newLineAdds), "percent", false],
+        ["readToTomarioku", "能動読了→止まりを置くタップ", pct(total.tomarioku, total.fullReadCount), "percent", false],
         ["textCv", "文字CV", fmt(total.textCv), "number", false],
         ["textCvCpa", "文字CV獲得CPA", textCvCpaText, "number", true],
         ["newAddToTextCv", "新規追加→文字CV", pct(total.textCv, total.newLineAdds), "percent", false],
@@ -1545,6 +1551,7 @@
         else if (bp === "リマインド１直後") acc.blocks.afterRemind1 += 1;
         else if (bp === "リマインド２直後") acc.blocks.afterRemind2 += 1;
         else if (bp === "リマインド３直後") acc.blocks.afterRemind3 += 1;
+        else if (bp === "止まりを置くタップ後") acc.blocks.afterTomarioku += 1;
         else if (bp === "文字CV後") acc.blocks.afterTextCv += 1;
         else if (bp === "文字観測完了直後") acc.blocks.afterComplete += 1;
         else if (bp === "単発詳細確認直後") acc.blocks.afterDetail += 1;
@@ -1560,7 +1567,7 @@
         blocks:{
           afterTsu1:0, afterTsu2:0, afterTsu3:0, afterTsu4:0, afterTsu5:0, afterTsu6:0, afterTsu7:0,
           afterRemind1:0, afterRemind2:0, afterRemind3:0,
-          afterTextCv:0, afterComplete:0, afterDetail:0, afterFaq:0, afterSchedule:0, beforePay:0, none:0
+          afterTomarioku:0, afterTextCv:0, afterComplete:0, afterDetail:0, afterFaq:0, afterSchedule:0, beforePay:0, none:0
         }
       });
 
@@ -1589,6 +1596,7 @@
         "通1の直後":"afterTsu1","通2の直後":"afterTsu2","通3の直後":"afterTsu3","通4の直後":"afterTsu4",
         "通5の直後":"afterTsu5","通6の直後":"afterTsu6","通7の直後":"afterTsu7",
         "リマインド1直後":"afterRemind1","リマインド2直後":"afterRemind2","リマインド3直後":"afterRemind3",
+        "止まりを置くタップ後":"afterTomarioku",
         "文字CV後":"afterTextCv","文字観測完了直後":"afterComplete","単発詳細確認直後":"afterDetail",
         "FAQなどの情報確認後":"afterFaq","日程候補送付後":"afterSchedule","支払い前":"beforePay"
       };
@@ -1678,6 +1686,7 @@
       $("blockAfterRemind1").textContent = fmt(total.blocks.afterRemind1);
       $("blockAfterRemind2").textContent = fmt(total.blocks.afterRemind2);
       $("blockAfterRemind3").textContent = fmt(total.blocks.afterRemind3);
+      $("blockAfterTomarioku").textContent = fmt(total.blocks.afterTomarioku);
       $("blockAfterTextCv").textContent = fmt(total.blocks.afterTextCv);
       $("blockAfterComplete").textContent = fmt(total.blocks.afterComplete);
       $("blockAfterDetail").textContent = fmt(total.blocks.afterDetail);

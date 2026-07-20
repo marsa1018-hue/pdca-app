@@ -978,6 +978,8 @@
       $("time").value = currentTime();
       editingId = null;
       document.querySelector("#recordView button[type='submit']").textContent = "保存する";
+      $("addRate").dataset.auto = "";
+      $("lineCpa").dataset.auto = "";
       setBlockPoint("");
     }
 
@@ -998,6 +1000,35 @@
       }
 
       return data;
+    }
+
+    // 入力中にライブ自動計算（手動で触った場合は上書きしない）
+    function autoCalcForm() {
+      const clicks = num($("clicks").value);
+      const lineTap = num($("lineTap").value);
+      const spend = num($("spend").value);
+      const lineAdds = num($("lineAdds").value);
+
+      const addRateEl = $("addRate");
+      if ((addRateEl.value === "" || addRateEl.dataset.auto === "1") && clicks > 0) {
+        addRateEl.value = ((lineTap / clicks) * 100).toFixed(2);
+        addRateEl.dataset.auto = "1";
+      }
+
+      const lineCpaEl = $("lineCpa");
+      if ((lineCpaEl.value === "" || lineCpaEl.dataset.auto === "1") && spend > 0 && lineAdds > 0) {
+        lineCpaEl.value = String(Math.round(spend / lineAdds));
+        lineCpaEl.dataset.auto = "1";
+      }
+    }
+
+    function bindAutoCalc() {
+      ["clicks","lineTap","spend","lineAdds"].forEach(id => {
+        $(id).addEventListener("input", autoCalcForm);
+      });
+      ["addRate","lineCpa"].forEach(id => {
+        $(id).addEventListener("input", () => { $(id).dataset.auto = ""; });
+      });
     }
 
     function normalizeBlockPoint(value) {
@@ -1026,6 +1057,9 @@
 
     function setFormData(record) {
       fields.forEach(f => $(f).value = record[f] ?? "");
+      $("addRate").dataset.auto = ($("addRate").value === "") ? "1" : "";
+      $("lineCpa").dataset.auto = ($("lineCpa").value === "") ? "1" : "";
+      autoCalcForm();
       setBlockPoint(normalizeBlockPoint(record.blockPoint || ""));
     }
 
@@ -1772,6 +1806,8 @@
         box.classList.remove("show");
       }, 2600);
     }
+
+    bindAutoCalc();
 
     $("pdcaForm").addEventListener("submit", async (e) => {
       e.preventDefault();
